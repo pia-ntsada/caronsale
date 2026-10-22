@@ -8,7 +8,7 @@ import argparse
 from pathlib import Path
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import mlflow
 import mlflow.sklearn
 
@@ -47,12 +47,15 @@ def main(args):
         random_state=42,
     )
     model.fit(x_train, y_train)
-    mse = mean_squared_error(y_test, model.predict(x_test))
+    predictions = model.predict(x_test)
+    mse = mean_squared_error(y_test, predictions)
+    mae = mean_absolute_error(y_test, predictions)
+    r2 = r2_score(y_test, predictions)
 
     mlflow.log_params(
         {"n_estimators": args.n_estimators, "max_depth": args.max_depth}
     )
-    mlflow.log_metric("MSE", mse)
+    mlflow.log_metrics({"MSE": mse, "MAE": mae, "R2": r2})
 
     model_path = Path(args.model_output)
     model_path.mkdir(parents=True, exist_ok=True)
