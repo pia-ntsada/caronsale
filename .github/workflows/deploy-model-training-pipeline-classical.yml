@@ -65,8 +65,18 @@ jobs:
       secrets:
           creds: ${{secrets.AZURE_CREDENTIALS}}
       
+  register-components:
+      needs: [get-config, register-environment]
+      uses: ./.github/workflows/custom-register-components.yml
+      with:
+        resource_group: ${{ needs.get-config.outputs.resource_group }}
+        workspace_name: ${{ needs.get-config.outputs.aml_workspace }}
+        component_files: mlops/azureml/train/prep.yml mlops/azureml/train/train.yml mlops/azureml/train/register.yml
+      secrets:
+          creds: ${{secrets.AZURE_CREDENTIALS}}
+
   run-pipeline:
-      needs: [get-config,register-environment,create-compute,register-dataset]
+      needs: [get-config,register-environment,create-compute,register-dataset,register-components]
       uses: ./.github/workflows/custom-run-pipeline.yml
       with:
         resource_group: ${{ needs.get-config.outputs.resource_group }}

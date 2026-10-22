@@ -1,0 +1,39 @@
+name: register-components
+
+on:
+  workflow_call:
+    inputs:
+      component_files:
+        required: true
+        type: string
+        description: Space-separated component YAML paths
+      resource_group:
+        required: true
+        type: string
+      workspace_name:
+        required: true
+        type: string
+    secrets:
+      creds:
+        required: true
+jobs:
+  register-components:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: "Az CLI login"
+        uses: azure/login@v1
+        with:
+          creds: ${{secrets.creds}}
+      - name: install-extension
+        run: az extension add -n ml -y
+      - name: update-extension
+        run: az extension update -n ml
+      - name: register-components
+        run: |
+          for f in ${{ inputs.component_files }}; do
+            az ml component create --file "${{ github.workspace }}/$f" \
+              --resource-group ${{ inputs.resource_group }} \
+              --workspace-name ${{ inputs.workspace_name }}
+          done
